@@ -1,4 +1,5 @@
 #Analysis are conducted through R, using the lavaan package.Tidyverse have been used to clean the data.
+#The data should be transformed from CSV to R, and renamed to 'dat' for the analysis to work.
 
 
 
