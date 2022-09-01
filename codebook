@@ -1,0 +1,211 @@
+#Analysis are conducted through R, using the lavaan package.Tidyverse have been used to clean the data.
+
+
+
+install.package("lavaan")
+library("lavaan")
+install.packages("tidyverse")
+library(tidyverse)
+
+
+
+#code for full CFA.
+
+cfa_full <- 'purp =~ PURQ1 + PURQ2_R + PURQ3 + PURQ4_R  
+col =~ COLQ1 + COLQ2_R + COLQ3 + COLQ4 + COLQ5
+bel =~ BELQ1 + BELQ2_R + BELQ3_R + BELQ4 + BELQ5 + BELQ6
+grow =~ GROWQ1 + GROWQ2 + GROWQ3 + GROWQ4_R + GROWQ5 + GROWQ6
+int =~ ENGCQ1 + ENGCQ2 + ENGCQ3
+aff =~ ENGAQ1 + ENGAQ2 + ENGAQ3
+soc =~ ENGSQ1 + ENGSQ2 + ENGSQ3
+eng =~ int + aff + soc
+retention =~ RETQ1_R + RETQ2_R + RETQ3_R
+perf =~ PERFQ6 + PERFQ7 + PERFQ8 + PERFQ9 + PERFQ10 + PERFQ12 + PERFQ13'
+
+fitcfa <- cfa(cfa_full, data=dat)
+summary(fitcfa, fit.measures = TRUE)
+modificationIndices(fitcfa, minimum.value = 50)
+
+#code for refined CFA.
+cfa_ref <- 'col =~ COLQ1 + COLQ3 + COLQ4 + COLQ5 
+purp =~ PURQ1 + PURQ3 + PURQ4_R
+bel =~ BELQ1 + BELQ2_R + BELQ3_R + BELQ4 + BELQ5 + BELQ6
+grow =~ GROWQ1 + GROWQ2 + GROWQ3 + GROWQ5 + GROWQ6
+int =~ ENGCQ1 + ENGCQ2 + ENGCQ3
+soc =~ ENGSQ1 + ENGSQ2 + ENGSQ3
+aff =~ ENGAQ1 + ENGAQ2 + ENGAQ3
+eng =~ int + soc + aff
+retention =~ RETQ1_R + RETQ2_R + RETQ3_R
+perf =~ PERFQ6 + PERFQ7 + PERFQ8 + PERFQ9 + PERFQ10 + PERFQ12 + PERFQ13
+COLQ1 ~~ COLQ5
+BELQ1 ~~ BELQ2_R
+BELQ5 ~~ BELQ6
+ENGAQ2 ~~ ENGAQ3
+GROWQ5 ~~ GROWQ6
+PERFQ6 ~~ PERFQ7
+PERFQ8 ~~ PERFQ9
+GROWQ1 ~~ GROWQ2
+BELQ5 ~~ BELQ6
+'
+fitcfaref <- cfa(cfa_ref, data=dat)
+summary(fitcfaref, fit.measures = TRUE)
+
+
+
+
+
+#code for full SEM model.
+
+sem <- 'col =~ COLQ1 + COLQ3 + COLQ4 + COLQ5 
+purp =~ PURQ1 + PURQ3 + PURQ4_R
+bel =~ BELQ1 + BELQ2_R + BELQ3_R + BELQ4 + BELQ5 + BELQ6
+grow =~ GROWQ1 + GROWQ2 + GROWQ3 + GROWQ5 + GROWQ6
+int =~ ENGCQ1 + ENGCQ2 + ENGCQ3
+soc =~ ENGSQ1 + ENGSQ2 + ENGSQ3
+aff =~ ENGAQ1 + ENGAQ2 + ENGAQ3
+col ~ int
+col ~ soc
+col ~ bel
+purp ~ int
+purp ~ aff
+purp ~ bel
+col ~~ aff
+grow ~ int
+grow ~ soc
+grow ~ bel
+grow ~~ aff
+engagement =~ int + soc + aff
+retention =~ RETQ1_R + RETQ2_R + RETQ3_R
+perf =~ PERFQ6 + PERFQ7 + PERFQ8 + PERFQ9 + PERFQ10 + PERFQ12 + PERFQ13
+engagement ~ retention
+engagement ~ perf
+bel ~ retention
+bel ~ perf
+bel ~~ engagement
+PERFQ8 ~~  PERFQ9
+ENGAQ1 ~~ ENGAQ3
+COLQ1 ~~ COLQ5
+ENGSQ1 ~~ ENGSQ3
+ENGCQ2 ~~ ENGCQ3
+ENGSQ1 ~~ ENGSQ2
+'
+
+semfit <- sem(sem, data=dat)
+summary(semfit, standardized = TRUE, fit.measures = TRUE)
+
+#Individual analysis has been filtered into different categories.
+#Created categories whether they are full-time office workers, hybrid or working from home.
+
+dat <- dat %>% mutate(WFH = recode(WFH_past_3_months,
+                                         "Not at all (I can't work from home)" = "Fulltime",
+                                         "1 day a week" = "Hybrid",
+                                         "2 days a week" = "Hybrid",
+                                         "3 days a week" = "Hybrid",
+                                         "4 days a week" = "Hybrid",
+                                         "Every day ( 5 days a week or more)" = "WFH"))
+                                         
+#Filter the data into different datasets based on working environment.
+
+
+wfh <- dat %>%
+  filter(WFH =="WFH")
+hybrid <- dat %>%
+  filter(WFH=="Hybrid")
+fulltime <- dat %>%
+  filter(WFH=="Fulltime")
+  
+
+
+#code for office employed.
+
+semfulltime <- 'col =~ COLQ1 + COLQ3 + COLQ4 + COLQ5 
+purp =~ PURQ1 + PURQ3 + PURQ4_R
+bel =~ BELQ1 + BELQ2_R + BELQ3_R + BELQ4 + BELQ5 + BELQ6
+grow =~ GROWQ1 + GROWQ2 + GROWQ3 + GROWQ5 + GROWQ6
+int =~ ENGCQ1 + ENGCQ2 + ENGCQ3
+soc =~ ENGSQ1 + ENGSQ2 + ENGSQ3
+aff =~ ENGAQ1 + ENGAQ2 + ENGAQ3
+eng =~ int + soc + aff
+col ~ bel
+purp ~ aff
+purp ~ bel
+grow ~ int
+grow ~ soc
+retention =~ RETQ1_R + RETQ2_R + RETQ3_R
+perf =~ PERFQ6 + PERFQ7 + PERFQ8 + PERFQ9 + PERFQ10 + PERFQ12 + PERFQ13
+eng ~ retention
+eng ~ perf
+bel ~ retention
+bel ~ perf
+bel ~~ eng
+BELQ1 ~~ BELQ2_R
+BELQ5 ~~ BELQ6
+GROWQ5 ~~ GROWQ6
+PERFQ8 ~~ PERFQ9
+ENGSQ1 ~~ ENGAQ2
+ENGAQ2 ~~ ENGAQ3
+'
+semfitfulltime <- sem(semfulltime, data=fulltime)
+summary(semfitfulltime, standardized = TRUE, fit.measures = TRUE)
+
+#code for hybrid workers.
+semhybrid <- 'col =~ COLQ1 + COLQ3 + COLQ4 + COLQ5 
+purp =~ PURQ1 + PURQ3 + PURQ4_R
+bel =~ BELQ1 + BELQ2_R + BELQ3_R + BELQ4 + BELQ5 + BELQ6
+grow =~ GROWQ1 + GROWQ2 + GROWQ3 + GROWQ5 + GROWQ6
+int =~ ENGCQ1 + ENGCQ2 + ENGCQ3
+soc =~ ENGSQ1 + ENGSQ2 + ENGSQ3
+aff =~ ENGAQ1 + ENGAQ2 + ENGAQ3
+eng =~ int + soc + aff
+col ~ eng
+purp ~ eng
+purp ~ bel
+grow ~ eng
+retention =~ RETQ1_R + RETQ2_R + RETQ3_R
+perf =~ PERFQ6 + PERFQ7 + PERFQ8 + PERFQ9 + PERFQ10 + PERFQ12 + PERFQ13
+eng ~ retention
+eng ~ perf
+bel ~ retention
+bel ~ perf
+bel ~~ eng
+GROWQ1 ~~ GROWQ2
+PERFQ8 ~~ PERFQ9
+BELQ1 ~~ BELQ2_R
+BELQ5 ~~ BELQ6
+ENGAQ2 ~~ ENGAQ3
+BELQ2_R ~~   BELQ3_R
+'
+semfithybrid <- sem(semhybrid, data=hybrid)
+summary(semfithybrid, standardized = TRUE, fit.measures = TRUE)
+
+#code for wfh.
+semwfh1 <- 'col =~ COLQ1 + COLQ3 + COLQ4 + COLQ5 
+purp =~ PURQ1 + PURQ3 + PURQ4_R
+bel =~ BELQ1 + BELQ2_R + BELQ3_R + BELQ4 + BELQ5 + BELQ6
+grow =~ GROWQ1 + GROWQ2 + GROWQ3 + GROWQ5 + GROWQ6
+int =~ ENGCQ1 + ENGCQ2 + ENGCQ3
+soc =~ ENGSQ1 + ENGSQ2 + ENGSQ3
+aff =~ ENGAQ1 + ENGAQ2 + ENGAQ3
+eng =~ int + soc + aff
+col ~ eng
+col ~ bel
+purp ~ eng
+grow ~ eng
+grow ~ bel
+retention =~ RETQ1_R + RETQ2_R + RETQ3_R
+perf =~ PERFQ6 + PERFQ7 + PERFQ8 + PERFQ9 + PERFQ10 + PERFQ12 + PERFQ13
+eng ~ retention
+eng ~ perf
+bel ~ retention
+bel ~ perf
+bel ~~ eng
+BELQ1 ~~ BELQ2_R
+BELQ5 ~~ BELQ6
+GROWQ5 ~~ GROWQ6
+PERFQ8 ~~ PERFQ9
+COLQ1 ~~ COLQ5
+ENGAQ1 ~~ ENGAQ3
+'
+
+semfitwfh1 <- sem(semwfh1, data=wfh)
+summary(semfitwfh1, standardized = TRUE, fit.measures = TRUE)
